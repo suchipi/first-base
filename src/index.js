@@ -94,7 +94,9 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
       if (running) {
         child.kill(signal);
       }
-      unreffable.unref();
+      if (unreffable) {
+        unreffable.unref();
+      }
     },
   };
 

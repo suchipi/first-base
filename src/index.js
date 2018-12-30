@@ -116,7 +116,7 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
   const checkForPendingOutputRequestsToResolve = () => {
     pendingOutputContainsRequests.forEach((request) => {
       if (typeof request.value === "string") {
-        if (stripAnsi(outputContainsBuffer).includes(request.value)) {
+        if (stripAnsi(outputContainsBuffer).indexOf(request.value) != -1) {
           request.resolve();
         }
       } else if (request.value instanceof RegExp) {

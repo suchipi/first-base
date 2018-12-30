@@ -1,0 +1,29 @@
+{
+  "name": "first-base",
+  "version": "0.1.0",
+  "description": "CLI testing helper",
+  "main": "dist/index.js",
+  "repository": "https://github.com/suchipi/first-base",
+  "author": "Lily Scott <me@suchipi.com>",
+  "license": "MIT",
+  "dependencies": {
+    "node-pty": "^0.8.0",
+    "strip-ansi": "^5.0.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.2.3",
+    "babel-core": "^7.0.0-bridge.0",
+    "babel-jest": "^23.6.0",
+    "eslint": "^5.11.1",
+    "eslint-config-unobtrusive": "^1.2.2",
+    "eslint-plugin-import": "^2.14.0",
+    "jest": "^23.6.0",
+    "prettier": "^1.15.3"
+  },
+  "scripts": {
+    "build": "babel src --out-dir dist",
+    "test": "jest"
+  }
+}

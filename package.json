@@ -23,7 +23,7 @@
     "prettier": "^1.15.3"
   },
   "scripts": {
-    "build": "babel src --out-dir dist",
+    "build": "mkdir -p dist; rm -rf dist/*; babel src/index.js --out-dir dist && cp src/index.js.flow dist/ && cp src/index.d.ts dist/",
     "test": "jest"
   }
 }

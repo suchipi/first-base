@@ -7,7 +7,7 @@
   "author": "Lily Scott <me@suchipi.com>",
   "license": "MIT",
   "dependencies": {
-    "node-pty": "^0.8.0",
+    "node-pty": "^0.9.0",
     "strip-ansi": "^5.0.0"
   },
   "devDependencies": {

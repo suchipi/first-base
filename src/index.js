@@ -130,15 +130,27 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
   };
 
   stdout.setEncoding("utf-8");
-  stdout.on("data", (data) => {
+
+  const handleStdoutData = (data) => {
     runContext.result.stdout += data;
     outputContainsBuffer += data;
     debugLog(`STDOUT: ${data.toString()}`);
     checkForPendingOutputRequestsToResolve();
-  });
+  };
+
+  if (stdout.onData) {
+    // the pty instance returned by node-pty
+    // requires attaching handlers differently
+    stdout.onData(handleStdoutData);
+  } else {
+    stdout.on('data', handleStdoutData);
+  }
 
   if (stderr) {
     stderr.setEncoding("utf-8");
+
+    // this is never a pty instance,
+    // so we don't need to deal with onData here:
     stderr.on("data", (data) => {
       runContext.result.stderr += data;
       outputContainsBuffer += data;

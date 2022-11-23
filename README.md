@@ -21,7 +21,7 @@ test("something", async () => {
 
 ### `spawn(command: string, args?: Array<string>, options?: Object) => RunContext`
 
-`args` and `options` are the same as [child_process.spawn](https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options), except you can also put `pty: true` in `options` to launch the process using a psuedoterminal (useful for testing color output).
+`args` and `options` are the same as [child_process.spawn](https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options).
 
 Returns a `RunContext` object; see below.
 

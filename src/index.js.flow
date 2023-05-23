@@ -23,6 +23,7 @@ export type RunContext = {
   outputContains(value: string | RegExp): Promise<void>,
   clearOutputContainsBuffer(): void,
   write(data: string | Buffer): void,
+  close(stream: "stdin" | "stdout" | "stderr"): void,
   kill(signal?: string): void,
 };
 

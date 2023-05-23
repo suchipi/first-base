@@ -111,6 +111,19 @@ run.write("2 + 2\n"); // Write 2 + 2 then press enter
 await run.outputContains("4");
 ```
 
+### `RunContext#close(stream: 'stdin' | 'stdout' | 'stderr')`
+
+Close one of the processes's associated stdio streams.
+
+#### Usage
+
+```js
+const run = spawn("node", ["-i"]); // start Node.js REPL
+await run.outputContains("> "); // Wait until prompt appears
+run.close("stdin"); // Like pressing Ctrl+D; sends EOF
+await run.completion;
+```
+
 ### `RunContext#kill(signal?: string)`
 
 Kills the process. If no signal is specified, it defaults to `"SIGINT"`.

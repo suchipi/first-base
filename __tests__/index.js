@@ -45,6 +45,15 @@ describe("spawn", () => {
     await run.completion;
   });
 
+  test("close", async () => {
+    const run = spawn("node", ["-i"]);
+    await run.outputContains("> ");
+    run.write("2 + 2\n");
+    await run.outputContains("4");
+    run.close("stdin");
+    await run.completion;
+  });
+
   test("pty", async () => {
     const cleanOutput = (run) => stripAnsi(run.result.stdout.trim());
 

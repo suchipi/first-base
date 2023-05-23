@@ -23,6 +23,7 @@ export type RunContext = {
   clearOutputContainsBuffer(): void;
   // TODO: Should be string | Buffer, but idk how to use Buffer since they might not be using node types
   write(data: any): void;
+  close(stream: "stdin" | "stdout" | "stderr"): void;
   kill(signal?: string): void;
 };
 

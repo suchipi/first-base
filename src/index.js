@@ -87,6 +87,29 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
       stdin.write(data);
     },
 
+    // Call this function to close stdin, stdout, or stderr.
+    close(stream) {
+      switch (String(stream).toLowerCase()) {
+        case "stdin": {
+          stdin.end();
+          break;
+        }
+        case "stdout": {
+          stdout.end();
+          break;
+        }
+        case "stderr": {
+          stderr.end();
+          break;
+        }
+        default: {
+          throw new Error(
+            `Invalid stream name: '${stream}'. Valid names are 'stdin', 'stdout', or 'stderr'.`
+          );
+        }
+      }
+    },
+
     // Call this function to send a signal to the child process.
     // You can pass "SIGTERM", "SIGKILL", etc. Defaults to "SIGINT".
     kill(signal = "SIGINT") {

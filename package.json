@@ -3,7 +3,10 @@
   "version": "1.4.0",
   "description": "Integration testing for CLI applications",
   "main": "dist/index.js",
-  "repository": "https://github.com/suchipi/first-base",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/suchipi/first-base.git"
+  },
   "author": "Lily Skye <me@suchipi.com>",
   "license": "MIT",
   "dependencies": {

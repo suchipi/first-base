@@ -1,4 +1,5 @@
 const normalSpawn = require("child_process").spawn;
+const ptySpawn = require("node-pty").spawn;
 const stripAnsi = require("strip-ansi");
 
 // Run a child process and return a "run context" object
@@ -123,9 +124,11 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
   };
 
   if (options.pty) {
-    throw new Error(
-      "pty mode is no longer supported due to lack of support for new node.js versions in the node-pty module"
-    );
+    child = ptySpawn(cmd, args, options);
+    stdin = child;
+    stdout = child;
+    stderr = null; // no way to tell between stdout and stderr with pty
+    unreffable = child.socket;
   } else {
     child = normalSpawn(cmd, args, options);
     stdin = child.stdin;

@@ -8,6 +8,7 @@ export type Options = {
   shell?: boolean | string;
   windowsVerbatimArguments?: boolean;
   windowsHide?: boolean;
+  pty?: boolean;
 };
 
 export type RunContext = {

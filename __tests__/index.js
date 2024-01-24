@@ -61,10 +61,8 @@ describe("spawn", () => {
     await run1.completion;
     expect(cleanOutput(run1)).toEqual("undefined");
 
-    expect(() => {
-      spawn("node", ["-p", "process.stdout.isTTY"], { pty: true });
-    }).toThrowErrorMatchingInlineSnapshot(
-      `"pty mode is no longer supported due to lack of support for new node.js versions in the node-pty module"`
-    );
+    const run2 = spawn("node", ["-p", "process.stdout.isTTY"], { pty: true });
+    await run2.completion;
+    expect(cleanOutput(run2)).toEqual("true");
   });
 });

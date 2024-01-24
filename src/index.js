@@ -188,9 +188,7 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
       pendingOutputContainsRequests.forEach((request) => {
         request.reject(
           new Error(
-            `Child process ${reason} before its output contained the requested content: ${
-              request.value
-            }`
+            `Child process ${reason} before its output contained the requested content: ${request.value}`
           )
         );
       });

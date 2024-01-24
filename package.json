@@ -10,16 +10,16 @@
     "strip-ansi": "^5.0.0"
   },
   "devDependencies": {
-    "@babel/cli": "^7.2.3",
-    "@babel/core": "^7.2.2",
-    "@babel/preset-env": "^7.2.3",
+    "@babel/cli": "^7.23.4",
+    "@babel/core": "^7.23.7",
+    "@babel/preset-env": "^7.23.8",
     "babel-core": "^7.0.0-bridge.0",
-    "babel-jest": "^23.6.0",
-    "eslint": "^5.11.1",
-    "eslint-config-unobtrusive": "^1.2.2",
-    "eslint-plugin-import": "^2.14.0",
-    "jest": "^23.6.0",
-    "prettier": "^1.15.3"
+    "babel-jest": "^29.7.0",
+    "eslint": "^8.56.0",
+    "eslint-config-unobtrusive": "^1.2.5",
+    "eslint-plugin-import": "^2.29.1",
+    "jest": "^29.7.0",
+    "prettier": "^3.2.4"
   },
   "scripts": {
     "build": "mkdir -p dist; rm -rf dist/*; babel src/index.js --out-dir dist && cp src/index.js.flow dist/ && cp src/index.d.ts dist/",

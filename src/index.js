@@ -1,6 +1,7 @@
 const normalSpawn = require("child_process").spawn;
 const ptySpawn = require("node-pty").spawn;
 const stripAnsi = require("strip-ansi");
+const { sanitizers } = require("./sanitizers");
 
 // Run a child process and return a "run context" object
 // to interact with it. Function signature is the same as
@@ -50,6 +51,20 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
       code: null,
       // true if the process errored out
       error: false,
+    },
+
+    // Return a version of result which has had the string sanitizers run on it
+    cleanResult() {
+      return Object.assign({}, runContext.result, {
+        stdout: sanitizers.reduce(
+          (str, transformFn) => transformFn(str),
+          runContext.result.stdout
+        ),
+        stderr: sanitizers.reduce(
+          (str, transformFn) => transformFn(str),
+          runContext.result.stderr
+        ),
+      });
     },
 
     // Promise that gets resolved when the child process completes.
@@ -211,4 +226,4 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
   return runContext;
 };
 
-module.exports = { spawn };
+module.exports = { spawn, sanitizers };

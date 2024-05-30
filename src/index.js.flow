@@ -33,6 +33,8 @@ interface Exports {
   spawn(cmd: string, args: Array<string>): RunContext;
   spawn(cmd: string, options: Options): RunContext;
   spawn(cmd: string, args: Array<string>, options: Options): RunContext;
+
+  sanitizers: Array<(str: string) => string>;
 }
 
 declare module.exports: Exports;

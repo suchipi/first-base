@@ -1,5 +1,6 @@
 src
 __tests__
+__fixtures__
 .babelrc
 .eslintrc
 .gitignore

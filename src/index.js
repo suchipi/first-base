@@ -1,5 +1,4 @@
 const normalSpawn = require("child_process").spawn;
-const ptySpawn = require("node-pty").spawn;
 const stripAnsi = require("strip-ansi");
 const { sanitizers } = require("./sanitizers");
 
@@ -139,6 +138,7 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
   };
 
   if (options.pty) {
+    const ptySpawn = require("node-pty").spawn;
     child = ptySpawn(cmd, args, options);
     stdin = child;
     stdout = child;

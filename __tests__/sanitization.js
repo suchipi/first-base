@@ -22,15 +22,17 @@ throw new Error("oh no!");
 ^
 
 Error: oh no!
-    at Object.<anonymous> (/Users/suchipi/Code/first-base/__fixtures__/throw-error.js:1:7)
-    at Module._compile (node:internal/modules/cjs/loader:1376:14)
-    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
-    at Module.load (node:internal/modules/cjs/loader:1207:32)
-    at Module._load (node:internal/modules/cjs/loader:1023:12)
-    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:135:12)
-    at node:internal/main/run_main_module:28:49
+    at Object.<anonymous> [90m(/Users/suchipi/Code/first-base/[39m__fixtures__/throw-error.js:1:7[90m)[39m
+[90m    at Module._compile (node:internal/modules/cjs/loader:1761:14)[39m
+[90m    at Object..js (node:internal/modules/cjs/loader:1893:10)[39m
+[90m    at Module.load (node:internal/modules/cjs/loader:1481:32)[39m
+[90m    at Module._load (node:internal/modules/cjs/loader:1300:12)[39m
+[90m    at TracingChannel.traceSync (node:diagnostics_channel:328:14)[39m
+[90m    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)[39m
+[90m    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)[39m
+[90m    at node:internal/main/run_main_module:33:47[39m
 
-Node.js v20.11.1
+Node.js v24.13.0
 ",
   "stdout": "",
 }
@@ -43,21 +45,21 @@ test("with cleaning", async () => {
   ]);
   await run.completion;
   expect(run.cleanResult()).toMatchInlineSnapshot(`
-    {
-      "code": 1,
-      "error": false,
-      "stderr": "<rootDir>/__fixtures__/throw-error.js
-    throw new Error("oh no!");
-    ^
+{
+  "code": 1,
+  "error": false,
+  "stderr": "<rootDir>/__fixtures__/throw-error.js
+throw new Error("oh no!");
+^
 
-    Error: oh no!
-        at somewhere
+Error: oh no!
+    at somewhere
 
-    Node.js v20.11.1
-    ",
-      "stdout": "",
-    }
-  `);
+Node.js v24.13.0
+",
+  "stdout": "",
+}
+`);
 });
 
 test("adding a custom sanitizer", async () => {
@@ -68,21 +70,21 @@ test("adding a custom sanitizer", async () => {
   ]);
   await run.completion;
   expect(run.cleanResult()).toMatchInlineSnapshot(`
-    {
-      "code": 1,
-      "error": false,
-      "stderr": "<rootDir>/__fixtures__/throw-error.js
-    throw new Error("oh yes!");
-    ^
+{
+  "code": 1,
+  "error": false,
+  "stderr": "<rootDir>/__fixtures__/throw-error.js
+throw new Error("oh yes!");
+^
 
-    Error: oh yes!
-        at somewhere
+Error: oh yes!
+    at somewhere
 
-    Node.js v20.11.1
-    ",
-      "stdout": "",
-    }
-  `);
+Node.js v24.13.0
+",
+  "stdout": "",
+}
+`);
 });
 
 test("without the default sanitizers", async () => {
@@ -102,15 +104,17 @@ throw new Error("oh yes!");
 ^
 
 Error: oh yes!
-    at Object.<anonymous> (/Users/suchipi/Code/first-base/__fixtures__/throw-error.js:1:7)
-    at Module._compile (node:internal/modules/cjs/loader:1376:14)
-    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
-    at Module.load (node:internal/modules/cjs/loader:1207:32)
-    at Module._load (node:internal/modules/cjs/loader:1023:12)
-    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:135:12)
-    at node:internal/main/run_main_module:28:49
+    at Object.<anonymous> [90m(/Users/suchipi/Code/first-base/[39m__fixtures__/throw-error.js:1:7[90m)[39m
+[90m    at Module._compile (node:internal/modules/cjs/loader:1761:14)[39m
+[90m    at Object..js (node:internal/modules/cjs/loader:1893:10)[39m
+[90m    at Module.load (node:internal/modules/cjs/loader:1481:32)[39m
+[90m    at Module._load (node:internal/modules/cjs/loader:1300:12)[39m
+[90m    at TracingChannel.traceSync (node:diagnostics_channel:328:14)[39m
+[90m    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)[39m
+[90m    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)[39m
+[90m    at node:internal/main/run_main_module:33:47[39m
 
-Node.js v20.11.1
+Node.js v24.13.0
 ",
   "stdout": "",
 }

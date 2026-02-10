@@ -64,3 +64,10 @@ export const spawn: ((cmd: string) => RunContext) &
  * You can remove them or replace them or add to them by mutating the `sanitizers` Array.
  */
 export const sanitizers: Array<(str: string) => string>;
+
+/**
+ * All runs that have been spawned which haven't reached completion.
+ *
+ * It may be beneficial to clean these up in a test timeout handler or etc.
+ */
+export const allInflightRunContexts: Set<RunContext>;

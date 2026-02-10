@@ -35,6 +35,8 @@ interface Exports {
   spawn(cmd: string, args: Array<string>, options: Options): RunContext;
 
   sanitizers: Array<(str: string) => string>;
+
+  allInflightRunContexts: Set<RunContext>;
 }
 
 declare module.exports: Exports;

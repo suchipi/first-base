@@ -2,6 +2,8 @@ const normalSpawn = require("child_process").spawn;
 const stripAnsi = require("strip-ansi");
 const { sanitizers } = require("./sanitizers");
 
+const allInflightRunContexts = new Set();
+
 // Run a child process and return a "run context" object
 // to interact with it. Function signature is the same as
 // child_process spawn, except you can pass `pty: true` in
@@ -152,6 +154,7 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
     unreffable = child;
   }
   running = true;
+  allInflightRunContexts.add(runContext);
 
   const checkForPendingOutputRequestsToResolve = () => {
     pendingOutputContainsRequests.forEach((request) => {
@@ -202,6 +205,7 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
       debugLog(`Process ${reason}`);
       debugLog(runContext.result);
       running = false;
+      allInflightRunContexts.delete(runContext);
       resolve();
       pendingOutputContainsRequests.forEach((request) => {
         request.reject(
@@ -226,4 +230,4 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
   return runContext;
 };
 
-module.exports = { spawn, sanitizers };
+module.exports = { spawn, sanitizers, allInflightRunContexts };

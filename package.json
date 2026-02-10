@@ -14,7 +14,7 @@
     "nice-path": "^3.2.2"
   },
   "optionalDependencies": {
-    "node-pty": "^1.1.0"
+    "node-pty": "^1.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.28.6",

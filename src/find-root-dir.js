@@ -9,7 +9,6 @@ const veryWeakRootDirIndicators = ["package.json", "README.md"];
 
 function hasFile(dir, filename) {
   const fullPath = dir.concat(filename).toString();
-  console.log(`checking for ${fullPath}`);
   try {
     return fs.existsSync(fullPath);
   } catch (err) {

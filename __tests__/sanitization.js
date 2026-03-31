@@ -16,7 +16,7 @@ test("without cleaning", async () => {
   expect(run.result).toMatchInlineSnapshot(`
 {
   "code": 1,
-  "error": false,
+  "error": null,
   "stderr": "/Users/suchipi/Code/first-base/__fixtures__/throw-error.js:1
 throw new Error("oh no!");
 ^
@@ -47,7 +47,7 @@ test("with cleaning", async () => {
   expect(run.cleanResult()).toMatchInlineSnapshot(`
 {
   "code": 1,
-  "error": false,
+  "error": null,
   "stderr": "<rootDir>/__fixtures__/throw-error.js
 throw new Error("oh no!");
 ^
@@ -72,7 +72,7 @@ test("adding a custom sanitizer", async () => {
   expect(run.cleanResult()).toMatchInlineSnapshot(`
 {
   "code": 1,
-  "error": false,
+  "error": null,
   "stderr": "<rootDir>/__fixtures__/throw-error.js
 throw new Error("oh yes!");
 ^
@@ -98,7 +98,7 @@ test("without the default sanitizers", async () => {
   expect(run.cleanResult()).toMatchInlineSnapshot(`
 {
   "code": 1,
-  "error": false,
+  "error": null,
   "stderr": "/Users/suchipi/Code/first-base/__fixtures__/throw-error.js:1
 throw new Error("oh yes!");
 ^

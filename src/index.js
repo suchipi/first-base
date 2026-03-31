@@ -50,8 +50,8 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
       stderr: "",
       // Exit status code, if the process has finished.
       code: null,
-      // true if the process errored out
-      error: false,
+      // if the process errored out, this will be the Error
+      error: null,
     },
 
     // Return a version of result which has had the string sanitizers run on it
@@ -221,8 +221,8 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
       finish("exited");
     });
 
-    child.once("error", () => {
-      runContext.result.error = true;
+    child.once("error", (error) => {
+      runContext.result.error = error;
       finish("errored");
     });
   });

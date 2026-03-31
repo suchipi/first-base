@@ -17,7 +17,7 @@ export type RunContext = {
     stdout: string,
     stderr: string,
     code: null | number,
-    error: boolean,
+    error: null | Error,
   },
   completion: Promise<void>,
   debug(): RunContext,

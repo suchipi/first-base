@@ -16,7 +16,7 @@ export type RunContext = {
     stdout: string;
     stderr: string;
     code: null | number;
-    error: boolean;
+    error: null | Error;
   };
   /**
    * Same as {@link RunContext.result}, but with {@link sanitizers} run on
@@ -26,7 +26,7 @@ export type RunContext = {
     stdout: string;
     stderr: string;
     code: null | number;
-    error: boolean;
+    error: null | Error;
   };
   completion: Promise<void>;
   debug(): RunContext;

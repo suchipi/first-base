@@ -32,7 +32,7 @@ An object with the following properties on it:
 - `stdout` (`string`): All the data the process has written to STDOUT so far
 - `stderr` (`string`): All the data the process has written to STDERR so far
 - `code` (`number | null`): Exit status code, if the process has finished
-- `error` (`boolean`): If the process errored out, this is `true`
+- `error` (`null | Error`): If the process errored out, this is the Error
 
 This object gets updated over time as the process runs.
 
@@ -40,9 +40,9 @@ This object gets updated over time as the process runs.
 
 ```js
 const run = spawn("ls", { cwd: __dirname });
-console.log(run.result); // { stdout: '', stderr: '', code: null, error: false }
+console.log(run.result); // { stdout: '', stderr: '', code: null, error: null }
 await run.completion;
-console.log(run.result); // { stdout: 'README.md\npackage.json\nindex.js\n', stderr: '', code: 0, error: false }
+console.log(run.result); // { stdout: 'README.md\npackage.json\nindex.js\n', stderr: '', code: 0, error: null }
 ```
 
 ### `RunContext#completion`
@@ -70,7 +70,7 @@ const run = spawn("ls", { cwd: __dirname }).debug();
 //
 // STDOUT: README.md\npackage.json\nindex.js
 // Process exited
-// { stdout: 'README.md\npackage.json\nindex.js', stderr: '', code: 0, error: false }
+// { stdout: 'README.md\npackage.json\nindex.js', stderr: '', code: 0, error: null }
 ```
 
 ### `RunContext#outputContains(value: string | RegExp) => Promise<void>`

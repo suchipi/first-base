@@ -12,7 +12,7 @@ describe("spawn", () => {
       stdout: "hi\n",
       stderr: "there\n",
       code: 0,
-      error: false,
+      error: null,
     });
   });
 

@@ -246,7 +246,7 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
         }
         finish("exited");
       });
-      disposable.push(disposable);
+      disposables.push(disposable);
     } else {
       child.on("exit", (code) => {
         debugLog("'exit' event", { code });

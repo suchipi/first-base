@@ -222,6 +222,10 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
     });
 
     child.once("error", (error) => {
+      if (typeof error === "object" && error !== null && error.code === "EIO") {
+        // not real; process is about to exit
+        return;
+      }
       runContext.result.error = error;
       finish("errored");
     });

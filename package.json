@@ -10,11 +10,9 @@
   "author": "Lily Skye <me@suchipi.com>",
   "license": "MIT",
   "dependencies": {
-    "strip-ansi": "^5.0.0",
-    "nice-path": "^3.2.2"
-  },
-  "optionalDependencies": {
-    "node-pty": "^1.0.0"
+    "@lydell/node-pty": "^1.2.0-beta.3",
+    "nice-path": "^3.2.2",
+    "strip-ansi": "^5.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.28.6",

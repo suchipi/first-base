@@ -140,7 +140,7 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
   };
 
   if (options.pty) {
-    const ptySpawn = require("node-pty").spawn;
+    const ptySpawn = require("@lydell/node-pty").spawn;
     child = ptySpawn(cmd, args, options);
     stdin = child;
     stdout = child;

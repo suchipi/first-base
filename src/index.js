@@ -216,14 +216,15 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
       });
     };
 
-    child.once("exit", (code) => {
+    child.on("exit", (code) => {
       runContext.result.code = code;
       finish("exited");
     });
 
-    child.once("error", (error) => {
+    child.on("error", (error) => {
       if (typeof error === "object" && error !== null && error.code === "EIO") {
         // not real; process is about to exit
+        debugLog("Ignoring spurious EIO error:", error);
         return;
       }
       runContext.result.error = error;

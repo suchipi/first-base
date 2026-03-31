@@ -36,6 +36,7 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
   let debug = false;
   let outputContainsBuffer = "";
   let pendingOutputContainsRequests = new Set();
+  const disposables = [];
 
   const debugLog = (...msg) => {
     if (debug) {
@@ -156,6 +157,10 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
   running = true;
   allInflightRunContexts.add(runContext);
 
+  child.on("spawn", () => {
+    debugLog("'spawn' event");
+  });
+
   const checkForPendingOutputRequestsToResolve = () => {
     pendingOutputContainsRequests.forEach((request) => {
       if (typeof request.value === "string") {
@@ -201,27 +206,61 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
   }
 
   runContext.completion = new Promise((resolve) => {
+    let hasFinished = false;
     const finish = (reason) => {
-      debugLog(`Process ${reason}`);
-      debugLog(runContext.result);
-      running = false;
-      allInflightRunContexts.delete(runContext);
-      resolve();
-      pendingOutputContainsRequests.forEach((request) => {
-        request.reject(
-          new Error(
-            `Child process ${reason} before its output contained the requested content: ${request.value}`
-          )
-        );
-      });
+      debugLog("in finish", runContext.result);
+      if (hasFinished) {
+        debugLog("finish called more than once; ignoring");
+      } else {
+        running = false;
+        allInflightRunContexts.delete(runContext);
+        resolve();
+        for (const request of pendingOutputContainsRequests) {
+          request.reject(
+            new Error(
+              `Child process ${reason} before its output contained the requested content: ${request.value}`
+            )
+          );
+        }
+        for (const disposable of disposables) {
+          disposable.dispose();
+        }
+        hasFinished = true;
+      }
     };
 
-    child.on("exit", (code) => {
-      runContext.result.code = code;
-      finish("exited");
+    child.on("close", (code, signal) => {
+      debugLog("'close' event", { code, signal });
+
+      if (code != null) {
+        runContext.result.code = code;
+      }
     });
 
+    if (child.onExit) {
+      const disposable = child.onExit(({ exitCode, signal }) => {
+        debugLog("onExit", { exitCode, signal });
+
+        if (exitCode != null) {
+          runContext.result.code = exitCode;
+        }
+        finish("exited");
+      });
+      disposable.push(disposable);
+    } else {
+      child.on("exit", (code) => {
+        debugLog("'exit' event", { code });
+
+        if (code != null) {
+          runContext.result.code = code;
+        }
+        finish("exited");
+      });
+    }
+
     child.on("error", (error) => {
+      debugLog("'error' event", { error });
+
       if (typeof error === "object" && error !== null && error.code === "EIO") {
         // not real; process is about to exit
         debugLog("Ignoring spurious EIO error:", error);

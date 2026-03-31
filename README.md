@@ -173,3 +173,13 @@ It may be beneficial to clean these up in a test timeout handler or etc.
 ## License
 
 MIT
+
+## Upgrading from 1.x
+
+The only things that changed between 1.x and 2.0 are:
+
+- The `error` property of a `RunContext` changed from `boolean` to `null | Error`
+- We switched node-pty fork to a prebuilt one instead of an install-time compiled node-gyp one, which has the side-effect that we only support the following platforms:
+  - Linux arm64 and x86_64
+  - macOS arm64 and x86_64
+  - Windows arm64 and x86_64

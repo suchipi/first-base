@@ -1,6 +1,6 @@
 {
   "name": "first-base",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Integration testing for CLI applications",
   "main": "dist/index.js",
   "repository": {

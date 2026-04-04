@@ -88,9 +88,9 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
           pendingOutputContainsRequests.delete(request);
           resolve();
         };
-        request.reject = () => {
+        request.reject = (error) => {
           pendingOutputContainsRequests.delete(request);
-          reject();
+          reject(error);
         };
         pendingOutputContainsRequests.add(request);
       });
@@ -113,11 +113,11 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
           break;
         }
         case "stdout": {
-          stdout.end();
+          stdout.destroy();
           break;
         }
         case "stderr": {
-          stderr.end();
+          stderr.destroy();
           break;
         }
         default: {

@@ -118,4 +118,80 @@ describe("spawn with pty", () => {
     expect(stripAnsi(run1.result.stdout)).toContain("proc1");
     expect(stripAnsi(run2.result.stdout)).toContain("proc2");
   });
+
+  test("debug logs to console in pty mode", async () => {
+    const spy = jest.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      const run = spawn("node", ["-e", "console.log(2 + 2)"], {
+        pty: true,
+      }).debug();
+      await run.completion;
+      expect(spy).toHaveBeenCalledWith(expect.stringContaining("STDOUT:"));
+      expect(spy).toHaveBeenCalledWith("onExit", expect.any(Object));
+      expect(spy).toHaveBeenCalledWith("in finish", run.result);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  test("outputContains rejects when pty process exits before match", async () => {
+    const run = spawn("node", ["-e", "void 0"], { pty: true });
+    const promise = run.outputContains("this will never appear");
+    await run.completion;
+    await expect(promise).rejects.toThrowErrorMatchingInlineSnapshot(
+      `"Child process exited before its output contained the requested content: this will never appear"`
+    );
+  });
+
+  test("kill with custom signal in pty mode", async () => {
+    const run = spawn(
+      "node",
+      [
+        "-e",
+        `
+        process.on("SIGTERM", () => {
+          process.stdout.write("got_sigterm");
+          process.exit(0);
+        });
+        console.log("ready");
+        setTimeout(() => {}, 5000);
+      `,
+      ],
+      { pty: true }
+    );
+    await run.outputContains("ready");
+    run.kill("SIGTERM");
+    await run.outputContains("got_sigterm");
+    await run.completion;
+    expect(stripAnsi(run.result.stdout)).toContain("got_sigterm");
+
+    const run2 = spawn(
+      "node",
+      [
+        "-e",
+        `
+        process.on("SIGINT", () => {
+          process.stdout.write("got_sigint");
+          process.exit(0);
+        });
+        console.log("ready");
+        setTimeout(() => {}, 5000);
+      `,
+      ],
+      { pty: true }
+    );
+    await run2.outputContains("ready");
+    run2.kill("SIGINT");
+    await run2.outputContains("got_sigint");
+    await run2.completion;
+    expect(stripAnsi(run2.result.stdout)).toContain("got_sigint");
+  });
+
+  test("kill after pty process already exited does not throw", async () => {
+    const run = spawn("node", ["-e", "console.log('done')"], { pty: true });
+    await run.completion;
+    expect(() => {
+      run.kill();
+    }).not.toThrow();
+  });
 });

@@ -1,5 +1,5 @@
-const fs = require("fs");
-const { Path } = require("nice-path");
+import fs from "fs";
+import { Path } from "nice-path";
 
 const strongRootDirIndicators = [".git", ".hg"];
 
@@ -7,7 +7,7 @@ const weakRootDirIndicators = ["package-lock.json", ".gitignore", ".hgignore"];
 
 const veryWeakRootDirIndicators = ["package.json", "README.md"];
 
-function hasFile(dir, filename) {
+function hasFile(dir: Path, filename: string): boolean {
   const fullPath = dir.concat(filename).toString();
   try {
     return fs.existsSync(fullPath);
@@ -16,10 +16,10 @@ function hasFile(dir, filename) {
   }
 }
 
-function findRootDir(startingDir) {
+export function findRootDir(startingDir: string): string {
   const start = new Path(startingDir).normalize();
 
-  const searchDirs = [start];
+  const searchDirs: Array<Path> = [start];
   let currentPath = start.replaceLast([]);
   while (currentPath.segments.length > 0) {
     searchDirs.push(currentPath);
@@ -52,5 +52,3 @@ function findRootDir(startingDir) {
 
   return start.toString();
 }
-
-module.exports = { findRootDir };

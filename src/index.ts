@@ -1,50 +1,99 @@
-const normalSpawn = require("child_process").spawn;
-const stripAnsi = require("strip-ansi");
-const { sanitizers } = require("./sanitizers");
+import { spawn as normalSpawn, ChildProcess } from "child_process";
+import { Readable, Writable } from "stream";
+import stripAnsi from "strip-ansi";
+import type { IPty, IDisposable } from "@lydell/node-pty";
+import { sanitizers } from "./sanitizers";
 
-const allInflightRunContexts = new Set();
+export type Options = {
+  cwd?: string;
+  env?: { [varName: string]: string | undefined };
+  argv0?: string;
+  detached?: boolean;
+  uid?: number;
+  gid?: number;
+  shell?: boolean | string;
+  windowsVerbatimArguments?: boolean;
+  windowsHide?: boolean;
+  pty?: boolean;
+};
+
+export type RunContext = {
+  result: {
+    stdout: string;
+    stderr: string;
+    code: null | number;
+    error: null | Error;
+  };
+  cleanResult(): {
+    stdout: string;
+    stderr: string;
+    code: null | number;
+    error: null | Error;
+  };
+  completion: Promise<void>;
+  debug(): RunContext;
+  outputContains(value: string | RegExp): Promise<void>;
+  clearOutputContainsBuffer(): void;
+  write(data: string | Buffer): void;
+  close(stream: "stdin" | "stdout" | "stderr"): void;
+  kill(signal?: NodeJS.Signals): void;
+};
+
+const allInflightRunContexts: Set<RunContext> = new Set();
 
 // Run a child process and return a "run context" object
 // to interact with it. Function signature is the same as
 // child_process spawn, except you can pass `pty: true` in
 // options to run the process in a psuedo-tty.
-const spawn = (cmd, argsOrOptions, passedOptions) => {
-  let args;
-  let options;
+function spawn(cmd: string): RunContext;
+function spawn(cmd: string, args: Array<string>): RunContext;
+function spawn(cmd: string, options: Options): RunContext;
+function spawn(cmd: string, args: Array<string>, options: Options): RunContext;
+function spawn(
+  cmd: string,
+  argsOrOptions?: Array<string> | Options,
+  passedOptions?: Options
+): RunContext {
+  let args: Array<string>;
+  let options: Options;
   if (Array.isArray(argsOrOptions)) {
     args = argsOrOptions;
   } else if (typeof argsOrOptions === "object") {
     options = argsOrOptions;
   }
-  if (passedOptions && !options) {
+  if (passedOptions && !options!) {
     options = passedOptions;
   }
-  if (!args) {
+  if (!args!) {
     args = [];
   }
-  if (!options) {
+  if (!options!) {
     options = {};
   }
 
-  let child;
-  let stdin;
-  let stdout;
-  let stderr;
-  let unreffable;
-  let running;
+  let child: ChildProcess | IPty;
+  let stdin: Writable | IPty;
+  let stdout: Readable | IPty;
+  let stderr: Readable | null;
+  let unreffable: ChildProcess | { unref(): void };
+  let running: boolean;
 
   let debug = false;
   let outputContainsBuffer = "";
-  let pendingOutputContainsRequests = new Set();
-  const disposables = [];
+  let pendingOutputContainsRequests = new Set<{
+    value: string | RegExp;
+    resolve: () => void;
+    reject: (error: Error) => void;
+  }>();
+  const disposables: Array<IDisposable> = [];
 
-  const debugLog = (...msg) => {
+  const debugLog = (...msg: Array<any>) => {
     if (debug) {
       console.log(...msg);
     }
   };
 
-  const runContext = {
+  const runContext: RunContext = {
     result: {
       // All of the stdout and stderr the process has written so far.
       stdout: "",
@@ -70,7 +119,8 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
     },
 
     // Promise that gets resolved when the child process completes.
-    completion: null,
+    // Actual value gets filled in below.
+    completion: Promise.resolve(),
 
     debug() {
       debug = true;
@@ -82,13 +132,17 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
     // matches the passed RegExp. Ignores ansi control characters.
     outputContains(value) {
       debugLog(`Waiting for output to contain ${JSON.stringify(value)}...`);
-      return new Promise((resolve, reject) => {
-        const request = { value };
+      return new Promise<void>((resolve, reject) => {
+        const request: {
+          value: string | RegExp;
+          resolve: () => void;
+          reject: (error: Error) => void;
+        } = { value, resolve: undefined!, reject: undefined! };
         request.resolve = () => {
           pendingOutputContainsRequests.delete(request);
           resolve();
         };
-        request.reject = (error) => {
+        request.reject = (error: Error) => {
           pendingOutputContainsRequests.delete(request);
           reject(error);
         };
@@ -109,15 +163,15 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
     close(stream) {
       switch (String(stream).toLowerCase()) {
         case "stdin": {
-          stdin.end();
+          (stdin as Writable).end();
           break;
         }
         case "stdout": {
-          stdout.destroy();
+          (stdout as Readable).destroy();
           break;
         }
         case "stderr": {
-          stderr.destroy();
+          stderr!.destroy();
           break;
         }
         default: {
@@ -130,36 +184,39 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
 
     // Call this function to send a signal to the child process.
     // You can pass "SIGTERM", "SIGKILL", etc. Defaults to "SIGINT".
-    kill(signal = "SIGINT") {
+    kill(signal: NodeJS.Signals = "SIGINT") {
       if (running) {
         child.kill(signal);
       }
       if (unreffable) {
-        unreffable.unref();
+        (unreffable as ChildProcess).unref();
       }
     },
   };
 
   if (options.pty) {
-    const ptySpawn = require("@lydell/node-pty").spawn;
+    const ptySpawn: typeof import("@lydell/node-pty").spawn =
+      require("@lydell/node-pty").spawn;
     child = ptySpawn(cmd, args, options);
-    stdin = child;
-    stdout = child;
+    stdin = child as IPty;
+    stdout = child as IPty;
     stderr = null; // no way to tell between stdout and stderr with pty
-    unreffable = child.socket;
+    unreffable = (child as IPty & { socket: { unref(): void } }).socket;
   } else {
     child = normalSpawn(cmd, args, options);
-    stdin = child.stdin;
-    stdout = child.stdout;
-    stderr = child.stderr;
-    unreffable = child;
+    stdin = (child as ChildProcess).stdin!;
+    stdout = (child as ChildProcess).stdout!;
+    stderr = (child as ChildProcess).stderr!;
+    unreffable = child as ChildProcess;
   }
   running = true;
   allInflightRunContexts.add(runContext);
 
-  child.on("spawn", () => {
-    debugLog("'spawn' event");
-  });
+  if ("on" in child) {
+    child.on("spawn", () => {
+      debugLog("'spawn' event");
+    });
+  }
 
   const checkForPendingOutputRequestsToResolve = () => {
     pendingOutputContainsRequests.forEach((request) => {
@@ -175,21 +232,23 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
     });
   };
 
-  stdout.setEncoding("utf-8");
+  if ("setEncoding" in stdout) {
+    stdout.setEncoding("utf-8");
+  }
 
-  const handleStdoutData = (data) => {
+  const handleStdoutData = (data: string) => {
     runContext.result.stdout += data;
     outputContainsBuffer += data;
     debugLog(`STDOUT: ${data.toString()}`);
     checkForPendingOutputRequestsToResolve();
   };
 
-  if (stdout.onData) {
+  if ((stdout as IPty).onData) {
     // the pty instance returned by node-pty
     // requires attaching handlers differently
-    stdout.onData(handleStdoutData);
+    (stdout as IPty).onData(handleStdoutData);
   } else {
-    stdout.on("data", handleStdoutData);
+    (stdout as Readable).on("data", handleStdoutData);
   }
 
   if (stderr) {
@@ -197,7 +256,7 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
 
     // this is never a pty instance,
     // so we don't need to deal with onData here:
-    stderr.on("data", (data) => {
+    stderr.on("data", (data: string) => {
       runContext.result.stderr += data;
       outputContainsBuffer += data;
       debugLog(`STDERR: ${data.toString()}`);
@@ -205,9 +264,9 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
     });
   }
 
-  runContext.completion = new Promise((resolve) => {
+  runContext.completion = new Promise<void>((resolve) => {
     let hasFinished = false;
-    const finish = (reason) => {
+    const finish = (reason: string) => {
       debugLog("in finish", runContext.result);
       if (hasFinished) {
         debugLog("finish called more than once; ignoring");
@@ -229,26 +288,30 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
       }
     };
 
-    child.on("close", (code, signal) => {
-      debugLog("'close' event", { code, signal });
+    if ("on" in child) {
+      child.on("close", (code: number | null, signal: string | null) => {
+        debugLog("'close' event", { code, signal });
 
-      if (code != null) {
-        runContext.result.code = code;
-      }
-    });
-
-    if (child.onExit) {
-      const disposable = child.onExit(({ exitCode, signal }) => {
-        debugLog("onExit", { exitCode, signal });
-
-        if (exitCode != null) {
-          runContext.result.code = exitCode;
+        if (code != null) {
+          runContext.result.code = code;
         }
-        finish("exited");
       });
+    }
+
+    if ("onExit" in child) {
+      const disposable = (child as IPty).onExit(
+        ({ exitCode, signal }: { exitCode: number; signal?: number }) => {
+          debugLog("onExit", { exitCode, signal });
+
+          if (exitCode != null) {
+            runContext.result.code = exitCode;
+          }
+          finish("exited");
+        }
+      );
       disposables.push(disposable);
     } else {
-      child.on("exit", (code) => {
+      child.on("exit", (code: number | null) => {
         debugLog("'exit' event", { code });
 
         if (code != null) {
@@ -258,20 +321,26 @@ const spawn = (cmd, argsOrOptions, passedOptions) => {
       });
     }
 
-    child.on("error", (error) => {
-      debugLog("'error' event", { error });
+    if ("on" in child) {
+      child.on("error", (error: Error & { code?: string }) => {
+        debugLog("'error' event", { error });
 
-      if (typeof error === "object" && error !== null && error.code === "EIO") {
-        // not real; process is about to exit
-        debugLog("Ignoring spurious EIO error:", error);
-        return;
-      }
-      runContext.result.error = error;
-      finish("errored");
-    });
+        if (
+          typeof error === "object" &&
+          error !== null &&
+          error.code === "EIO"
+        ) {
+          // not real; process is about to exit
+          debugLog("Ignoring spurious EIO error:", error);
+          return;
+        }
+        runContext.result.error = error;
+        finish("errored");
+      });
+    }
   });
 
   return runContext;
-};
+}
 
-module.exports = { spawn, sanitizers, allInflightRunContexts };
+export { spawn, sanitizers, allInflightRunContexts };

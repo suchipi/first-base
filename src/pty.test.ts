@@ -1,5 +1,6 @@
-const stripAnsi = require("strip-ansi");
-const { spawn } = require("../src");
+import stripAnsi from "strip-ansi";
+import { describe, test, expect, vi } from "vitest";
+import { spawn } from "./index";
 
 describe("spawn with pty", () => {
   test("process.stdout.isTTY is true in pty mode", async () => {
@@ -95,7 +96,7 @@ describe("spawn with pty", () => {
   });
 
   test("error from pty process is captured", async () => {
-    const run = spawn("node", ["__fixtures__/throw-error.js"], { pty: true });
+    const run = spawn("node", ["test-fixtures/throw-error.js"], { pty: true });
     await run.completion;
     const output = stripAnsi(run.result.stdout);
     expect(output).toContain("oh no!");
@@ -120,15 +121,44 @@ describe("spawn with pty", () => {
   });
 
   test("debug logs to console in pty mode", async () => {
-    const spy = jest.spyOn(console, "log").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
     try {
       const run = spawn("node", ["-e", "console.log(2 + 2)"], {
         pty: true,
       }).debug();
       await run.completion;
-      expect(spy).toHaveBeenCalledWith(expect.stringContaining("STDOUT:"));
-      expect(spy).toHaveBeenCalledWith("onExit", expect.any(Object));
-      expect(spy).toHaveBeenCalledWith("in finish", run.result);
+      expect(spy.mock.calls).toMatchInlineSnapshot(`
+        [
+          [
+            "STDOUT: [33m4[39m
+        ",
+          ],
+          [
+            "'close' event",
+            {
+              "code": undefined,
+              "signal": undefined,
+            },
+          ],
+          [
+            "onExit",
+            {
+              "exitCode": 0,
+              "signal": 0,
+            },
+          ],
+          [
+            "in finish",
+            {
+              "code": 0,
+              "error": null,
+              "stderr": "",
+              "stdout": "[33m4[39m
+        ",
+            },
+          ],
+        ]
+      `);
     } finally {
       spy.mockRestore();
     }
@@ -139,7 +169,7 @@ describe("spawn with pty", () => {
     const promise = run.outputContains("this will never appear");
     await run.completion;
     await expect(promise).rejects.toThrowErrorMatchingInlineSnapshot(
-      `"Child process exited before its output contained the requested content: this will never appear"`
+      `[Error: Child process exited before its output contained the requested content: this will never appear]`
     );
   });
 

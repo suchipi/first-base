@@ -3,6 +3,7 @@
   "version": "2.0.2",
   "description": "Integration testing for CLI applications",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/suchipi/first-base.git"
@@ -15,22 +16,13 @@
     "strip-ansi": "^5.0.0"
   },
   "devDependencies": {
-    "@babel/cli": "^7.28.6",
-    "@babel/core": "^7.29.0",
-    "@babel/preset-env": "^7.29.0",
-    "babel-core": "^7.0.0-bridge.0",
-    "babel-jest": "^30.2.0",
-    "eslint": "^8.56.0",
-    "eslint-config-unobtrusive": "^1.2.5",
-    "eslint-plugin-import": "^2.29.1",
-    "jest": "^30.2.0",
-    "prettier": "^3.8.1"
+    "@types/node": "^22.0.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.7.0",
+    "vitest": "^3.1.0"
   },
   "scripts": {
-    "build": "mkdir -p dist; rm -rf dist/*; babel src --out-dir dist && cp src/index.js.flow dist/ && cp src/index.d.ts dist/",
-    "test": "jest"
-  },
-  "jest": {
-    "prettierPath": null
+    "build": "mkdir -p dist; rm -rf dist/*; tsc && rm -f dist/*.test.js dist/*.test.d.ts && cp src/index.js.flow dist/",
+    "test": "vitest run"
   }
 }

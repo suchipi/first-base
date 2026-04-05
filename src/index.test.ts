@@ -1,5 +1,6 @@
-const stripAnsi = require("strip-ansi");
-const { spawn } = require("../src");
+import stripAnsi from "strip-ansi";
+import { describe, test, expect, vi } from "vitest";
+import { spawn } from "./index";
 
 describe("spawn", () => {
   test("result", async () => {
@@ -17,7 +18,7 @@ describe("spawn", () => {
   });
 
   test("debug logs to console", async () => {
-    const spy = jest.spyOn(console, "log").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
     try {
       const run = spawn("node", [
         "-e",
@@ -35,7 +36,7 @@ describe("spawn", () => {
   });
 
   test("debug logs outputContains", async () => {
-    const spy = jest.spyOn(console, "log").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
     try {
       const run = spawn("node", ["-e", "console.log('hello')"]).debug();
       await run.outputContains("hello");
@@ -72,7 +73,7 @@ describe("spawn", () => {
     const promise = run.outputContains("this will never appear");
     await run.completion;
     await expect(promise).rejects.toThrowErrorMatchingInlineSnapshot(
-      `"Child process exited before its output contained the requested content: this will never appear"`
+      `[Error: Child process exited before its output contained the requested content: this will never appear]`
     );
   });
 
@@ -137,7 +138,7 @@ describe("spawn", () => {
 
   test("close with invalid stream name throws", () => {
     const run = spawn("node", ["-e", "setTimeout(() => {}, 500)"]);
-    expect(() => run.close("bogus")).toThrow(
+    expect(() => run.close("bogus" as any)).toThrow(
       "Invalid stream name: 'bogus'. Valid names are 'stdin', 'stdout', or 'stderr'."
     );
     run.kill();
@@ -209,7 +210,8 @@ describe("spawn", () => {
   });
 
   test("pty", async () => {
-    const cleanOutput = (run) => stripAnsi(run.result.stdout.trim());
+    const cleanOutput = (run: { result: { stdout: string } }) =>
+      stripAnsi(run.result.stdout.trim());
 
     const run1 = spawn("node", ["-p", "process.stdout.isTTY"]);
     await run1.completion;

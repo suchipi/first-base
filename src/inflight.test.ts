@@ -1,4 +1,5 @@
-const { spawn, allInflightRunContexts } = require("../src");
+import { test, expect } from "vitest";
+import { spawn, allInflightRunContexts } from "./index";
 
 test("one run", async () => {
   const run1 = spawn("sleep", ["1"]);

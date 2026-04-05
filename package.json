@@ -1,6 +1,6 @@
 {
   "name": "first-base",
-  "version": "2.0.2",
+  "version": "3.0.0",
   "description": "Integration testing for CLI applications",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

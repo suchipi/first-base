@@ -18,8 +18,8 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "prettier": "^3.8.1",
-    "typescript": "^5.7.0",
-    "vitest": "^3.1.0"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
   },
   "scripts": {
     "build": "mkdir -p dist; rm -rf dist/*; tsc && rm -f dist/*.test.js dist/*.test.d.ts && cp src/index.js.flow dist/",

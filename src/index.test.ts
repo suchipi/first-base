@@ -20,16 +20,67 @@ describe("spawn", () => {
   test("debug logs to console", async () => {
     const spy = vi.spyOn(console, "log").mockImplementation(() => {});
     try {
-      const run = spawn("node", [
-        "-e",
-        "process.stdout.write('hi'); process.stderr.write('bye')",
-      ]).debug();
+      const run = spawn(
+        "node",
+        ["-e", "process.stdout.write('hi'); process.stderr.write('bye')"],
+        { debug: true }
+      );
       await run.completion;
-      expect(spy).toHaveBeenCalledWith("'spawn' event");
-      expect(spy).toHaveBeenCalledWith("STDOUT: hi");
-      expect(spy).toHaveBeenCalledWith("STDERR: bye");
-      expect(spy).toHaveBeenCalledWith("'exit' event", { code: 0 });
-      expect(spy).toHaveBeenCalledWith("in finish", run.result);
+      expect(spy.mock.calls).toMatchInlineSnapshot(`
+        [
+          [
+            "pty option was NOT true; using child_process",
+          ],
+          [
+            "using 'on' method to listen for child spawn event",
+          ],
+          [
+            "setting stdout encoding to utf-8",
+          ],
+          [
+            "using 'on' method to listen for stdout data event",
+          ],
+          [
+            "setting stderr encoding to utf-8",
+          ],
+          [
+            "using 'on' method to listen for stderr data event",
+          ],
+          [
+            "using 'on' method to listen for child close event",
+          ],
+          [
+            "using 'on' method to listen for child exit event",
+          ],
+          [
+            "using 'on' method to listen for child error event",
+          ],
+          [
+            "'spawn' event",
+          ],
+          [
+            "STDOUT: hi",
+          ],
+          [
+            "STDERR: bye",
+          ],
+          [
+            "'exit' event",
+            {
+              "code": 0,
+            },
+          ],
+          [
+            "in finish",
+            {
+              "code": 0,
+              "error": null,
+              "stderr": "bye",
+              "stdout": "hi",
+            },
+          ],
+        ]
+      `);
     } finally {
       spy.mockRestore();
     }

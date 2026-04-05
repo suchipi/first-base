@@ -32,6 +32,7 @@ export type RunContext = {
     error: null | Error;
   };
   completion: Promise<void>;
+  /** @deprecated pass `debug: true` as an option to {@link spawn} instead. */
   debug(): RunContext;
   outputContains(value: string | RegExp): Promise<void>;
   clearOutputContainsBuffer(): void;

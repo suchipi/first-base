@@ -183,3 +183,8 @@ The only things that changed between 1.x and 2.0 are:
   - Linux arm64 and x86_64
   - macOS arm64 and x86_64
   - Windows arm64 and x86_64
+
+## Upgrading from 2.x
+
+- The type definitions for `RunContext.write` and `RunContext.kill` were narrowed slightly. The runtime behavior of those methods didn't change.
+- `RunContext.debug()` is deprecated (but not removed). Use `spawn` option `debug: true` instead.

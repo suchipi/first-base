@@ -125,10 +125,35 @@ describe("spawn with pty", () => {
     try {
       const run = spawn("node", ["-e", "console.log(2 + 2)"], {
         pty: true,
-      }).debug();
+        debug: true,
+      });
       await run.completion;
       expect(spy.mock.calls).toMatchInlineSnapshot(`
         [
+          [
+            "pty option was true; using node-pty",
+          ],
+          [
+            "using 'on' method to listen for child spawn event",
+          ],
+          [
+            "setting stdout encoding to utf-8",
+          ],
+          [
+            "using 'onData' method to listen for stdout data event",
+          ],
+          [
+            "stderr isn't present (pty mixes stdout and stderr together), so not setting encoding or setting up data event listener for stderr",
+          ],
+          [
+            "using 'on' method to listen for child close event",
+          ],
+          [
+            "using 'onExit' method to listen for child exit event",
+          ],
+          [
+            "using 'on' method to listen for child error event",
+          ],
           [
             "STDOUT: [33m4[39m
         ",

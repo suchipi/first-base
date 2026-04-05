@@ -15,6 +15,7 @@ export type Options = {
   windowsVerbatimArguments?: boolean;
   windowsHide?: boolean;
   pty?: boolean;
+  debug?: boolean;
 };
 
 export type RunContext = {
@@ -75,10 +76,10 @@ function spawn(
   let stdin: Writable | IPty;
   let stdout: Readable | IPty;
   let stderr: Readable | null;
-  let unreffable: ChildProcess | { unref(): void };
+  let unreffable: null | { unref(): void } = null;
   let running: boolean;
 
-  let debug = false;
+  let debug = options.debug ?? false;
   let outputContainsBuffer = "";
   let pendingOutputContainsRequests = new Set<{
     value: string | RegExp;
@@ -163,15 +164,21 @@ function spawn(
     close(stream) {
       switch (String(stream).toLowerCase()) {
         case "stdin": {
-          (stdin as Writable).end();
+          if ("end" in stdin) {
+            stdin.end();
+          }
           break;
         }
         case "stdout": {
-          (stdout as Readable).destroy();
+          if ("destroy" in stdout) {
+            stdout.destroy();
+          }
           break;
         }
         case "stderr": {
-          stderr!.destroy();
+          if (stderr != null && "destroy" in stderr) {
+            stderr.destroy();
+          }
           break;
         }
         default: {
@@ -188,34 +195,43 @@ function spawn(
       if (running) {
         child.kill(signal);
       }
-      if (unreffable) {
-        (unreffable as ChildProcess).unref();
+      if (unreffable != null) {
+        unreffable.unref();
       }
     },
   };
 
   if (options.pty) {
+    debugLog("pty option was true; using node-pty");
     const ptySpawn: typeof import("@lydell/node-pty").spawn =
       require("@lydell/node-pty").spawn;
-    child = ptySpawn(cmd, args, options);
-    stdin = child as IPty;
-    stdout = child as IPty;
+    const ptyChild = ptySpawn(cmd, args, options);
+    child = ptyChild;
+    stdin = ptyChild;
+    stdout = ptyChild;
     stderr = null; // no way to tell between stdout and stderr with pty
-    unreffable = (child as IPty & { socket: { unref(): void } }).socket;
+    // no unreffable equivalent on ptyChild
   } else {
-    child = normalSpawn(cmd, args, options);
-    stdin = (child as ChildProcess).stdin!;
-    stdout = (child as ChildProcess).stdout!;
-    stderr = (child as ChildProcess).stderr!;
-    unreffable = child as ChildProcess;
+    debugLog("pty option was NOT true; using child_process");
+    const nonPtyChild = normalSpawn(cmd, args, options);
+    child = nonPtyChild;
+    stdin = nonPtyChild.stdin;
+    stdout = nonPtyChild.stdout;
+    stderr = nonPtyChild.stderr;
+    unreffable = nonPtyChild;
   }
   running = true;
   allInflightRunContexts.add(runContext);
 
   if ("on" in child) {
+    debugLog("using 'on' method to listen for child spawn event");
     child.on("spawn", () => {
       debugLog("'spawn' event");
     });
+  } else {
+    debugLog(
+      "child had no 'on' method, so child spawn event listener wasn't set up"
+    );
   }
 
   const checkForPendingOutputRequestsToResolve = () => {
@@ -233,7 +249,12 @@ function spawn(
   };
 
   if ("setEncoding" in stdout) {
+    debugLog("setting stdout encoding to utf-8");
     stdout.setEncoding("utf-8");
+  } else {
+    debugLog(
+      "not setting stdout encoding because the setEncoding method was not present"
+    );
   }
 
   const handleStdoutData = (data: string) => {
@@ -243,25 +264,33 @@ function spawn(
     checkForPendingOutputRequestsToResolve();
   };
 
-  if ((stdout as IPty).onData) {
+  if ("onData" in stdout) {
+    debugLog("using 'onData' method to listen for stdout data event");
     // the pty instance returned by node-pty
     // requires attaching handlers differently
-    (stdout as IPty).onData(handleStdoutData);
+    stdout.onData(handleStdoutData);
   } else {
-    (stdout as Readable).on("data", handleStdoutData);
+    debugLog("using 'on' method to listen for stdout data event");
+    stdout.on("data", handleStdoutData);
   }
 
   if (stderr) {
+    debugLog("setting stderr encoding to utf-8");
     stderr.setEncoding("utf-8");
 
     // this is never a pty instance,
     // so we don't need to deal with onData here:
+    debugLog("using 'on' method to listen for stderr data event");
     stderr.on("data", (data: string) => {
       runContext.result.stderr += data;
       outputContainsBuffer += data;
       debugLog(`STDERR: ${data.toString()}`);
       checkForPendingOutputRequestsToResolve();
     });
+  } else {
+    debugLog(
+      "stderr isn't present (pty mixes stdout and stderr together), so not setting encoding or setting up data event listener for stderr"
+    );
   }
 
   runContext.completion = new Promise<void>((resolve) => {
@@ -289,6 +318,7 @@ function spawn(
     };
 
     if ("on" in child) {
+      debugLog("using 'on' method to listen for child close event");
       child.on("close", (code: number | null, signal: string | null) => {
         debugLog("'close' event", { code, signal });
 
@@ -296,10 +326,15 @@ function spawn(
           runContext.result.code = code;
         }
       });
+    } else {
+      debugLog(
+        "child had no 'on' method, so child close event listener wasn't set up"
+      );
     }
 
     if ("onExit" in child) {
-      const disposable = (child as IPty).onExit(
+      debugLog("using 'onExit' method to listen for child exit event");
+      const disposable = child.onExit(
         ({ exitCode, signal }: { exitCode: number; signal?: number }) => {
           debugLog("onExit", { exitCode, signal });
 
@@ -311,6 +346,7 @@ function spawn(
       );
       disposables.push(disposable);
     } else {
+      debugLog("using 'on' method to listen for child exit event");
       child.on("exit", (code: number | null) => {
         debugLog("'exit' event", { code });
 
@@ -322,6 +358,7 @@ function spawn(
     }
 
     if ("on" in child) {
+      debugLog("using 'on' method to listen for child error event");
       child.on("error", (error: Error & { code?: string }) => {
         debugLog("'error' event", { error });
 
@@ -337,6 +374,10 @@ function spawn(
         runContext.result.error = error;
         finish("errored");
       });
+    } else {
+      debugLog(
+        "child had no 'on' method, so child error event listener wasn't set up"
+      );
     }
   });
 

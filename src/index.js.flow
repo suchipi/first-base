@@ -10,6 +10,7 @@ export type Options = {
   windowsVerbatimArguments?: ?boolean,
   windowsHide?: ?boolean,
   pty?: ?boolean,
+  debug?: ?boolean,
 };
 
 export type RunContext = {

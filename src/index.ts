@@ -354,6 +354,19 @@ function spawn(
         if (code != null) {
           runContext.result.code = code;
         }
+
+        debugLog(
+          "NOTE: 'exit' event doesn't resolve completion. Waiting for 'close' event."
+        );
+      });
+
+      debugLog("using 'on' method to listen for child close event");
+      child.on("close", (code: number | null) => {
+        debugLog("'close' event", { code });
+
+        if (code != null) {
+          runContext.result.code = code;
+        }
         finish("exited");
       });
     }

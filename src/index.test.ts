@@ -53,6 +53,9 @@ describe("spawn", () => {
             "using 'on' method to listen for child exit event",
           ],
           [
+            "using 'on' method to listen for child close event",
+          ],
+          [
             "using 'on' method to listen for child error event",
           ],
           [
@@ -66,6 +69,22 @@ describe("spawn", () => {
           ],
           [
             "'exit' event",
+            {
+              "code": 0,
+            },
+          ],
+          [
+            "NOTE: 'exit' event doesn't resolve completion. Waiting for 'close' event.",
+          ],
+          [
+            "'close' event",
+            {
+              "code": 0,
+              "signal": null,
+            },
+          ],
+          [
+            "'close' event",
             {
               "code": 0,
             },

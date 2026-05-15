@@ -34,6 +34,8 @@ An object with the following properties on it:
 - `code` (`number | null`): Exit status code, if the process has finished
 - `error` (`null | Error`): If the process errored out, this is the Error
 
+> NOTE: If spawned with option `pty: true`, `RunContext#result` has a single `output: string` property instead of both `stdout` and `stderr`.
+
 This object gets updated over time as the process runs.
 
 #### Usage
@@ -54,23 +56,6 @@ A Promise that gets resolved when the process completes. You can `await` it in y
 ```js
 const run = spawn("ls", { cwd: __dirname });
 await run.completion; // Waits until the `ls` process finishes
-```
-
-### `RunContext#debug() => RunContext`
-
-Enables debug logging for the `RunContext` and returns it. Useful when your tests are failing and you want to understand what's going on.
-
-Returns itself so you can add it to a variable declaration easily.
-
-#### Usage
-
-```js
-const run = spawn("ls", { cwd: __dirname }).debug();
-// The following messages are logged to the console over time:
-//
-// STDOUT: README.md\npackage.json\nindex.js
-// Process exited
-// { stdout: 'README.md\npackage.json\nindex.js', stderr: '', code: 0, error: null }
 ```
 
 ### `RunContext#outputContains(value: string | RegExp) => Promise<void>`
@@ -115,6 +100,8 @@ await run.outputContains("4");
 
 Close one of the processes's associated stdio streams.
 
+> NOTE: If spawned with option `pty: true`, `RunContext#close` is not present.
+
 #### Usage
 
 ```js
@@ -134,12 +121,14 @@ Kills the process. If no signal is specified, it defaults to `"SIGINT"`.
 const run = spawn("node", ["-i"]);
 run.kill(); // Kill with SIGINT
 // OR:
+run.kill("SIGTERM"); // Kill with SIGTERM
 run.kill("SIGKILL"); // Kill with SIGKILL
+// etc
 ```
 
 ### `RunContext#cleanResult()`
 
-A function which returns a new object with the same shape as `RunContext#result` but with its stdout/stderr passed through the `sanitizers` Array (see below).
+A function which returns a new object with the same shape as `RunContext#result` but with its stdout/stderr/output passed through the `sanitizers` Array (see below).
 
 Unlike `result`, this object does NOT get updated over time as the process runs.
 
@@ -174,7 +163,7 @@ It may be beneficial to clean these up in a test timeout handler or etc.
 
 MIT
 
-## Upgrading from 1.x
+## Upgrading from 1.x to 2.x
 
 The only things that changed between 1.x and 2.0 are:
 
@@ -184,7 +173,21 @@ The only things that changed between 1.x and 2.0 are:
   - macOS arm64 and x86_64
   - Windows arm64 and x86_64
 
-## Upgrading from 2.x
+## Upgrading from 2.x to 3.x
 
 - The type definitions for `RunContext.write` and `RunContext.kill` were narrowed slightly. The runtime behavior of those methods didn't change.
 - `RunContext.debug()` is deprecated (but not removed). Use `spawn` option `debug: true` instead.
+
+## Upgrading from 3.x to 4.x
+
+- `RunContext.debug()` is removed. Use `spawn` option `debug: true` instead.
+- The RunContext.result of children spawned with option `pty: true` now has one `output: string` property instead of a fake `stdout: string` and always-empty `stderr: string`.
+  - In other words, stuff that was being written to `.stdout` is now written to `.output`. `stderr` was always empty for pty children because of how node-pty works.
+  - Non-pty children still have distinct `stdout` and `stderr` strings like always.
+- For pty children, the "close" method which was a no-op on pty children has been removed.
+  - Non-pty children still have the "close" method.
+- For non-pty children, RunContext.completion now doesn't resolve until both the "exit" AND "close" event have been fired.
+  - Previously it fired when the "close" event was fired, which was _usually_ after "exit".
+  - A pty child only has one distinct exit event, which is when its completion promise resolves. Same as before.
+- For non-pty children, RunContext.completion now rejects when the "error" event is fired.
+  - Previously, RunContext.completion always resolved, even if RunContext.error was non-null.

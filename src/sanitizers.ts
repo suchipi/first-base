@@ -5,8 +5,22 @@ function escapeRegex(str: string): string {
   return str.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&");
 }
 
-interface ReplaceRootDir {
+export interface ReplaceRootDir {
   (str: string): string;
+  /**
+   * If you want to bypass the builtin "find root dir" logic used by the
+   * replaceRootDir sanitizer, you can run:
+   *
+   * ```ts
+   * const replaceRootDir = sanitizers.find(fn => fn.name === "replaceRootDir");
+   * replaceRootDir.cache.set(process.cwd(), "/home/me/my-project");
+   * ```
+   *
+   * If `process.cwd()` changes during the course of a test run, you'll need to
+   * add cache entries for the other locations, too. If that's too inconvenient,
+   * you're welcome to remove replaceRootDir from the sanitizers array and
+   * optionally replace it with your own implementation.
+   */
   cache: Map<string, string>;
 }
 
@@ -22,6 +36,14 @@ const replaceRootDir: ReplaceRootDir = Object.assign(
     cache: new Map<string, string>(),
   }
 );
+
+// Minifier protection so the above documented code snippet remains possible
+Object.defineProperty(replaceRootDir, "name", {
+  configurable: true,
+  enumerable: false,
+  writable: false,
+  value: "replaceRootDir",
+});
 
 export const sanitizers: Array<(str: string) => string> = [
   stripAnsi,

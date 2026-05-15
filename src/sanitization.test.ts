@@ -87,7 +87,7 @@ test("adding a custom sanitizer", async () => {
   `);
 });
 
-test("without the default sanitizers", async () => {
+test("adding a custom sanitizer without the default sanitizers", async () => {
   sanitizers.length = 0;
   sanitizers.push((str) => str.replaceAll("oh no", "oh yes"));
 

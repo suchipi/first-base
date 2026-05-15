@@ -1,6 +1,7 @@
 import stripAnsi from "strip-ansi";
 import { describe, test, expect, vi } from "vitest";
-import { spawn } from "./index";
+import { spawn } from "./spawn";
+import { PtyRunContext } from "./run-context";
 
 describe("spawn", () => {
   test("result", async () => {
@@ -29,43 +30,42 @@ describe("spawn", () => {
       expect(spy.mock.calls).toMatchInlineSnapshot(`
         [
           [
-            "pty option was NOT true; using child_process",
+            "in spawnNonPtyRunContext",
           ],
           [
-            "using 'on' method to listen for child spawn event",
+            "setting up spawn event listener",
           ],
           [
             "setting stdout encoding to utf-8",
           ],
           [
-            "using 'on' method to listen for stdout data event",
+            "setting up stdout data event listener",
           ],
           [
             "setting stderr encoding to utf-8",
           ],
           [
-            "using 'on' method to listen for stderr data event",
+            "setting up stderr data event listener",
           ],
           [
-            "using 'on' method to listen for child close event",
+            "setting up child close event listener",
           ],
           [
-            "using 'on' method to listen for child exit event",
+            "setting up child exit event listener",
           ],
           [
-            "using 'on' method to listen for child close event",
-          ],
-          [
-            "using 'on' method to listen for child error event",
+            "setting up child error event listener",
           ],
           [
             "'spawn' event",
           ],
           [
-            "STDOUT: hi",
+            "STDOUT: ",
+            "hi",
           ],
           [
-            "STDERR: bye",
+            "STDERR: ",
+            "bye",
           ],
           [
             "'exit' event",
@@ -74,28 +74,10 @@ describe("spawn", () => {
             },
           ],
           [
-            "NOTE: 'exit' event doesn't resolve completion. Waiting for 'close' event.",
-          ],
-          [
             "'close' event",
             {
               "code": 0,
               "signal": null,
-            },
-          ],
-          [
-            "'close' event",
-            {
-              "code": 0,
-            },
-          ],
-          [
-            "in finish",
-            {
-              "code": 0,
-              "error": null,
-              "stderr": "bye",
-              "stdout": "hi",
             },
           ],
         ]
@@ -108,7 +90,9 @@ describe("spawn", () => {
   test("debug logs outputContains", async () => {
     const spy = vi.spyOn(console, "log").mockImplementation(() => {});
     try {
-      const run = spawn("node", ["-e", "console.log('hello')"]).debug();
+      const run = spawn("node", ["-e", "console.log('hello')"], {
+        debug: true,
+      });
       await run.outputContains("hello");
       await run.completion;
       expect(spy).toHaveBeenCalledWith(
@@ -143,7 +127,7 @@ describe("spawn", () => {
     const promise = run.outputContains("this will never appear");
     await run.completion;
     await expect(promise).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[Error: Child process exited before its output contained the requested content: this will never appear]`
+      `[Error: Child process closed and exited before its output contained the requested content: this will never appear]`
     );
   });
 
@@ -280,15 +264,27 @@ describe("spawn", () => {
   });
 
   test("pty", async () => {
-    const cleanOutput = (run: { result: { stdout: string } }) =>
-      stripAnsi(run.result.stdout.trim());
-
     const run1 = spawn("node", ["-p", "process.stdout.isTTY"]);
     await run1.completion;
-    expect(cleanOutput(run1)).toEqual("undefined");
+    expect(run1.cleanResult()).toMatchInlineSnapshot(`
+      {
+        "code": 0,
+        "error": null,
+        "stderr": "",
+        "stdout": "undefined
+      ",
+      }
+    `);
 
     const run2 = spawn("node", ["-p", "process.stdout.isTTY"], { pty: true });
     await run2.completion;
-    expect(cleanOutput(run2)).toEqual("true");
+    expect(run2.cleanResult()).toMatchInlineSnapshot(`
+      {
+        "code": 0,
+        "error": null,
+        "output": "true
+      ",
+      }
+    `);
   });
 });

@@ -6,21 +6,7 @@ describe("spawn with pty", () => {
   test("process.stdout.isTTY is true in pty mode", async () => {
     const run = spawn("node", ["-p", "process.stdout.isTTY"], { pty: true });
     await run.completion;
-    expect(stripAnsi(run.result.stdout.trim())).toEqual("true");
-  });
-
-  test("process.stderr is null (pty merges stdout and stderr)", async () => {
-    const run = spawn(
-      "node",
-      ["-e", "console.log('out'); console.error('err');"],
-      { pty: true }
-    );
-    await run.completion;
-    // In pty mode, stderr is null so everything goes through stdout
-    expect(run.result.stderr).toEqual("");
-    const output = stripAnsi(run.result.stdout);
-    expect(output).toContain("out");
-    expect(output).toContain("err");
+    expect(stripAnsi(run.result.output.trim())).toEqual("true");
   });
 
   test("exit code is captured", async () => {
@@ -72,7 +58,7 @@ describe("spawn with pty", () => {
     await run.outputContains("foobar");
     run.kill();
     await run.completion;
-    expect(stripAnsi(run.result.stdout)).toContain("foobar");
+    expect(stripAnsi(run.result.output)).toContain("foobar");
   });
 
   test("kill terminates pty process", async () => {
@@ -80,7 +66,7 @@ describe("spawn with pty", () => {
     await run.outputContains("> ");
     run.kill();
     await run.completion;
-    // Process should have finished after kill
+    // Process should have finished after kill (sends SIGTERM)
     expect(run.result.code).not.toBeNull();
   });
 
@@ -88,17 +74,20 @@ describe("spawn with pty", () => {
     const run = spawn("node", ["-e", "console.log('hello')"], { pty: true });
     await run.completion;
     const clean = run.cleanResult();
-    // cleanResult should return an object with stdout, stderr, code, error
-    expect(clean).toHaveProperty("stdout");
-    expect(clean).toHaveProperty("stderr");
-    expect(clean).toHaveProperty("code");
-    expect(clean).toHaveProperty("error");
+    expect(clean).toMatchInlineSnapshot(`
+      {
+        "code": 0,
+        "error": null,
+        "output": "hello
+      ",
+      }
+    `);
   });
 
   test("error from pty process is captured", async () => {
     const run = spawn("node", ["test-fixtures/throw-error.js"], { pty: true });
     await run.completion;
-    const output = stripAnsi(run.result.stdout);
+    const output = stripAnsi(run.result.output);
     expect(output).toContain("oh no!");
     expect(run.result.code).not.toEqual(0);
   });
@@ -109,15 +98,15 @@ describe("spawn with pty", () => {
       env: Object.assign({}, process.env, { FIRST_BASE_TEST_VAR: "hello123" }),
     });
     await run.completion;
-    expect(stripAnsi(run.result.stdout)).toContain("hello123");
+    expect(stripAnsi(run.result.output)).toContain("hello123");
   });
 
   test("multiple pty processes can run concurrently", async () => {
     const run1 = spawn("node", ["-e", "console.log('proc1')"], { pty: true });
     const run2 = spawn("node", ["-e", "console.log('proc2')"], { pty: true });
     await Promise.all([run1.completion, run2.completion]);
-    expect(stripAnsi(run1.result.stdout)).toContain("proc1");
-    expect(stripAnsi(run2.result.stdout)).toContain("proc2");
+    expect(stripAnsi(run1.result.output)).toContain("proc1");
+    expect(stripAnsi(run2.result.output)).toContain("proc2");
   });
 
   test("debug logs to console in pty mode", async () => {
@@ -131,55 +120,23 @@ describe("spawn with pty", () => {
       expect(spy.mock.calls).toMatchInlineSnapshot(`
         [
           [
-            "pty option was true; using node-pty",
+            "in spawnPtyRunContext",
           ],
           [
-            "using 'on' method to listen for child spawn event",
-          ],
-          [
-            "setting stdout encoding to utf-8",
-          ],
-          [
-            "using 'onData' method to listen for stdout data event",
-          ],
-          [
-            "stderr isn't present (pty mixes stdout and stderr together), so not setting encoding or setting up data event listener for stderr",
-          ],
-          [
-            "using 'on' method to listen for child close event",
+            "using 'onData' method to listen for child data event",
           ],
           [
             "using 'onExit' method to listen for child exit event",
           ],
           [
-            "using 'on' method to listen for child error event",
-          ],
-          [
-            "STDOUT: [33m4[39m
+            "OUTPUT: [33m4[39m
         ",
-          ],
-          [
-            "'close' event",
-            {
-              "code": undefined,
-              "signal": undefined,
-            },
           ],
           [
             "onExit",
             {
               "exitCode": 0,
               "signal": 0,
-            },
-          ],
-          [
-            "in finish",
-            {
-              "code": 0,
-              "error": null,
-              "stderr": "",
-              "stdout": "[33m4[39m
-        ",
             },
           ],
         ]
@@ -218,7 +175,7 @@ describe("spawn with pty", () => {
     run.kill("SIGTERM");
     await run.outputContains("got_sigterm");
     await run.completion;
-    expect(stripAnsi(run.result.stdout)).toContain("got_sigterm");
+    expect(stripAnsi(run.result.output)).toContain("got_sigterm");
 
     const run2 = spawn(
       "node",
@@ -239,7 +196,7 @@ describe("spawn with pty", () => {
     run2.kill("SIGINT");
     await run2.outputContains("got_sigint");
     await run2.completion;
-    expect(stripAnsi(run2.result.stdout)).toContain("got_sigint");
+    expect(stripAnsi(run2.result.output)).toContain("got_sigint");
   });
 
   test("kill after pty process already exited does not throw", async () => {

@@ -12,6 +12,7 @@
   "license": "MIT",
   "dependencies": {
     "@lydell/node-pty": "^1.2.0-beta.3",
+    "@suchipi/defer": "^1.0.0",
     "nice-path": "^3.2.2",
     "strip-ansi": "^5.0.0"
   },
@@ -22,7 +23,7 @@
     "vitest": "^4.1.2"
   },
   "scripts": {
-    "build": "mkdir -p dist; rm -rf dist/*; tsc && rm -f dist/*.test.js dist/*.test.d.ts && cp src/index.js.flow dist/",
+    "build": "mkdir -p dist; rm -rf dist/*; tsc && rm -f dist/*.test.js dist/*.test.d.ts",
     "test": "vitest run"
   }
 }

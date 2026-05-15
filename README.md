@@ -141,7 +141,7 @@ By default, it contains 5 functions, which are run in order:
 
 - `stripAnsi`: Removes ANSI control characters
 - `replaceRootDir`: Replaces eg `/home/suchipi/Code/first-base/src/index.js` with `<rootDir>/src/index.js`
-  - This function searches upwards for the root dir using a heuristic, and caches results in the {@link Map} `replaceRootDir.cache`.
+  - This function searches upwards for the root dir using a heuristic, and caches results in the Map `replaceRootDir.cache`.
   - The heuristic is:
     - Look upwards for a folder containing `.git` or `.hg`
     - if none is found, look upwards for a folder containing `package-lock.json`, `.gitignore` or `.hgignore`,
